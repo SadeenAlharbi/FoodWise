@@ -191,7 +191,7 @@ def charity_portal():
     raw = store.load_raw()
     t = today()
     pk = donations.pickups()
-    pk = pk[pk.date == t.strftime("%Y-%m-%d")].iloc[::-1] if len(pk) else pk
+    pk = pk[(pk.date == t.strftime("%Y-%m-%d")) & (pk.status != "cancelled")].iloc[::-1] if len(pk) else pk   # الطلب الملغى لا يظهر للجمعية
     notified = [d for d in donations.expected(raw["products"], t) if d["sent_at"]]
     month = impact.build(raw, outcomes.measure(store.decisions(), raw, donations.pickups()))
     return render_template("charity.html", portal="charity", active="charity", today=t, pickups=pk,
