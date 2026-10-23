@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}أثر الفرع{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <div class="eyebrow">أثر الفرع</div>
+    <h1>أثر استخدام FoodWise في خفض الهدر الغذائي بالفرع</h1>
+    <p>منذ {{ d.foodwise_start|day }} {{ d.foodwise_start.year }}. نسبة الهدر تُقارن بالأسابيع الثمانية قبل بدء FoodWise.</p>
+  </div>
+</header>
+
+<section class="kpis">
+  <div class="card kpi good">
+    <div class="label">القيمة المحفوظة هذا الشهر</div>
+    <div class="value green">{{ d.saved_month|sar }}</div>
+    <div class="hint">من {{ d.saved_month_count }} قرار منفذ</div>
+  </div>
+  <div class="card kpi">
+    <div class="label">نسبة الهدر من المبيعات هذا الشهر</div>
+    <div class="value">{{ d.waste_pct_month|pct(1) }}</div>
+    <div class="hint">بقيمة {{ d.waste_month|sar }}</div>
+    <div class="hint {{ 'up-good' if d.waste_change_pct < 0 else 'up-bad' }}">
+      {{ 'أقل' if d.waste_change_pct < 0 else 'أكثر' }} بـ {{ d.waste_change_pct|abs|pct }} من قبل FoodWise ({{ d.waste_pct_base|pct(1) }})</div>
+  </div>
+  <div class="card kpi">
+    <div class="label">القرارات المنفذة في وقتها</div>
+    <div class="value">{{ d.on_time_pct|pct }}</div>
+    <div class="hint">من قرارات هذا الشهر</div>
+  </div>
+  <div class="card kpi">
+    <div class="label">ذهب للتبرع هذا الشهر</div>
+    <div class="value">{{ d.donated_kg|num }} كجم</div>
+    <div class="hint">في {{ d.donated_count }} عملية تبرع</div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <h2>نسبة الهدر الأسبوعية من المبيعات قبل FoodWise وبعده</h2>
+    <span class="muted">متوسط الأسبوع: {{ d.weekly_before|pct(1) }} قبل · {{ d.weekly_after|pct(1) }} بعد</span>
+  </div>
+  <div class="legend"><span class="key grey"></span>قبل FoodWise <span class="key green"></span>مع FoodWise</div>
+  {{ chart|safe }}
+</section>
+
+  <section class="card">
+    <div class="card-head"><h2>الهدر حسب الفئة</h2><span class="muted">آخر 4 أسابيع</span></div>
+    {% for c in d.by_category %}
+    <div class="catbar">
+      <div class="catbar-top"><span>{{ c.category }}</span><b>{{ c.pct|pct }} · {{ c.value|sar }}</b></div>
+      <div class="track"><span style="width: {{ c.pct }}%"></span></div>
+    </div>
+    {% endfor %}
+  </section>
+
+  <section class="card">
+    <div class="card-head"><h2>نتائج القرارات حسب نوعها</h2></div>
+    <div class="table-wrap"><table>
+      <thead><tr><th>القرار</th><th>العدد</th><th>المتوقع إنقاذه</th><th>تم إنقاذه فعليًا</th><th>نسبة النجاح</th></tr></thead>
+      <tbody>
+      {% for r in d.by_action %}
+        <tr>
+          <td><b>{{ r.action }}</b></td>
+          <td>{{ r.count }} قرار{% if r.pending %}<div class="sub">+ {{ r.pending }} بانتظار النتيجة</div>{% endif %}</td>
+          <td>{{ r.expected|sar }}</td>
+          <td><b>{{ r.actual|sar }}</b></td>
+          <td>{% if r.success_pct is not none %}<span class="chip {{ 'low' if r.success_pct >= 80 else ('mid' if r.success_pct >= 50 else 'high') }}">{{ r.success_pct|pct }}</span>{% else %}—{% endif %}</td>
+        </tr>
+      {% else %}
+        <tr><td colspan="5">لا توجد قرارات هذا الشهر.</td></tr>
+      {% endfor %}
+      </tbody>
+    </table></div>
+  </section>
+{% endblock %}

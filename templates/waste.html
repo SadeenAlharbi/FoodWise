@@ -1,0 +1,55 @@
+{% extends "base.html" %}
+{% block title %}توقع الهدر{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <div class="eyebrow">توقع الهدر</div>
+    <h1>ما الذي سيُهدر خلال {{ label }}؟</h1>
+    <p>يشمل المخزون الحالي والتوريدات القادمة بطريقة الطلب المعتادة.</p>
+  </div>
+  <form method="get" class="inline">
+    <label for="days" class="muted">الفترة</label>
+    <select id="days" name="days" onchange="this.form.submit()">
+      {% for d, t in periods.items() %}<option value="{{ d }}" {{ 'selected' if d == days }}>{{ t }}</option>{% endfor %}
+    </select>
+    <input type="hidden" name="cat" value="{{ cat }}">
+  </form>
+</header>
+
+<section class="kpis">
+  <div class="card kpi warn">
+    <div class="label">الهدر المتوقع خلال {{ label }}</div>
+    <div class="value">{{ totals.cost|sar }}</div>
+    <div class="hint">نحو {{ totals.kg|num }} كجم في {{ totals.n }} منتجات</div>
+  </div>
+</section>
+
+<nav class="tabs" aria-label="تصفية حسب الفئة">
+  <a href="{{ url_for('waste', days=days) }}" class="{{ 'on' if cat == 'all' }}">كل الفئات</a>
+  {% for k, v in cats.items() %}<a href="{{ url_for('waste', cat=k, days=days) }}" class="{{ 'on' if cat == k }}">{{ v }}</a>{% endfor %}
+</nav>
+
+<section class="card">
+  <div class="card-head"><h2>أكثر المنتجات هدرًا خلال {{ label }}</h2><span class="muted">بالريال</span></div>
+  {% if chart %}{{ chart|safe }}{% else %}<p class="empty">لا يُتوقع هدر في هذه الفئة.</p>{% endif %}
+</section>
+
+<section class="card">
+  <div class="card-head"><h2>تفاصيل كل منتج</h2></div>
+  <div class="table-wrap"><table>
+    <thead><tr><th>المنتج</th><th>المخزون الحالي</th><th>المتوقع بيعه خلال {{ label }}</th>
+      <th>الهدر المتوقع خلال {{ label }}</th><th>التكلفة</th></tr></thead>
+    <tbody>
+    {% for r in rows.itertuples() %}
+      <tr>
+        <td><b>{{ r.product_name }}</b><div class="sub">{{ r.category|cat }}</div></td>
+        <td>{{ r.stock|qty(r.unit) }}</td>
+        <td>{{ r.demand|qty(r.unit) }}</td>
+        <td>{{ r.waste|qty(r.unit) }}</td>
+        <td><b>{{ r.cost|sar }}</b></td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+</section>
+{% endblock %}

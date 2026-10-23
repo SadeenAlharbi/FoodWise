@@ -1,0 +1,76 @@
+{% extends "base.html" %}
+{% block title %}بوابة الجمعية{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <div class="eyebrow">{{ today|day }} {{ today.year }}</div>
+    <h1>طلبات التبرع من {{ branch }}</h1>
+  </div>
+</header>
+
+<section class="kpis">
+  <div class="card kpi good">
+    <div class="label">استلمتم هذا الشهر</div>
+    <div class="value green">{{ received_kg|num }} كجم</div>
+    <div class="hint">في {{ received_n }} عملية استلام</div>
+  </div>
+</section>
+
+<section class="card" id="today">
+  <div class="card-head">
+    <h2>طلبات الاستلام اليوم</h2>
+    <span class="muted">يرسلها الفرع عند اعتماد قرار تبرع</span>
+  </div>
+  {% if pickups|length %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>المنتج</th><th>الكمية</th><th>الوزن</th><th>موعد الاستلام</th><th>الحالة</th><th></th></tr></thead>
+    <tbody>
+    {% for p in pickups.itertuples() %}
+      <tr>
+        <td><b>{{ p.product_name }}</b><div class="sub">أُرسل الساعة {{ p.sent_at }}</div></td>
+        <td>{{ p.qty|qty(p.unit) }}</td>
+        <td>{{ p.kg|num(1) }} كجم</td>
+        <td>اليوم {{ p.pickup_time }}</td>
+        <td><span class="chip {{ {'sent': 'mid', 'confirmed': 'low', 'delivered': 'done', 'cancelled': 'muted'}[p.status] }}">{{ status_ar[p.status] }}</span></td>
+        <td class="actions">
+          {% if p.status in next_step %}
+          <form method="post" action="{{ url_for('pickup', rec_id=p.rec_id) }}">
+            <button class="btn {{ 'primary' if p.status == 'confirmed' else '' }}">{{ next_step[p.status][1] }}</button>
+          </form>
+          {% endif %}
+        </td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p class="empty">لا توجد طلبات استلام اليوم.</p>
+  {% endif %}
+</section>
+
+<section class="card" id="upcoming">
+  <div class="card-head">
+    <h2>التبرعات المتوقعة</h2>
+    <span class="muted">إشعارات مسبقة من الفرع · الكمية تقديرية وتتأكد يوم الاستلام</span>
+  </div>
+  {% for d in notified %}
+  <div class="upcoming-day">
+    <div class="upcoming-when">
+      <b>{{ d.date|day }}</b>
+      <span class="sub">نحو {{ d.kg|num(1) }} كجم</span>
+    </div>
+    <div class="upcoming-items">
+      {% for i in d['items'] %}<span class="pill">{{ i.product_name }}: {{ i.qty|qty(i.unit) }}</span>{% endfor %}
+    </div>
+    <div class="upcoming-act">
+      <form method="post" action="{{ url_for('charity_respond', day_key=d.key) }}" class="respond">
+        <button class="btn {{ 'primary' if d.response == 'yes' }}" name="answer" value="yes">سنستلم</button>
+        <button class="btn {{ 'chosen-no' if d.response == 'no' }}" name="answer" value="no">لا نستطيع</button>
+      </form>
+    </div>
+  </div>
+  {% else %}
+  <p class="empty">لا توجد إشعارات مسبقة من الفرع حاليًا.</p>
+  {% endfor %}
+</section>
+{% endblock %}

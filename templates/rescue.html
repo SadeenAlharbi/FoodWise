@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}قائمة الإنقاذ اليوم{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <div class="eyebrow">{{ today|day }} {{ today.year }}</div>
+    <h1>منتجات تحتاج قرارًا اليوم</h1>
+  </div>
+  <div class="factors">
+    {% for f in factors %}<span class="pill">{{ f }}</span>{% endfor %}
+  </div>
+</header>
+
+<section class="kpis">
+  <div class="card kpi warn">
+    <div class="label">الهدر المتوقع خلال 7 أيام</div>
+    <div class="value">{{ kpi.waste7|sar }}</div>
+    <div class="hint">إذا لم نتخذ أي قرار</div>
+  </div>
+  <div class="card kpi">
+    <div class="label">تم إنقاذه اليوم</div>
+    <div class="value green">{{ kpi.saved_today|sar }}</div>
+    <div class="hint">من {{ kpi.approved }} قرار معتمد</div>
+  </div>
+  <div class="card kpi">
+    <div class="label">منتجات تحتاج قرارًا</div>
+    <div class="value">{{ kpi.need }} منتج</div>
+    <div class="hint">منها {{ kpi.high }} بأولوية عالية</div>
+  </div>
+  <div class="card kpi">
+    <div class="label">القرارات المتخذة</div>
+    <div class="value">{{ kpi.decided }} / {{ kpi.need }} قرار</div>
+    <div class="progress" role="progressbar" aria-valuemin="0" aria-valuemax="{{ kpi.need }}" aria-valuenow="{{ kpi.decided }}">
+      <span style="width: {{ (100 * kpi.decided / kpi.need) if kpi.need else 0 }}%"></span></div>
+  </div>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <h2>قائمة الإنقاذ اليوم</h2>
+    <span class="muted">اضغط على المنتج لمعرفة السبب</span>
+  </div>
+  {% if recs|length %}
+  <div class="table-wrap"><table class="rescue">
+    <thead><tr><th>المنتج</th><th>الصلاحية</th><th>الهدر المتوقع</th><th>الأولوية</th><th>القرار المقترح</th><th></th></tr></thead>
+    <tbody>
+    {% for r in recs.itertuples() if r.status != 'مرفوض' %}
+      <tr class="row" data-target="why-{{ loop.index }}" tabindex="0" aria-expanded="false">
+        <td><b>{{ r.product_name }}</b><div class="sub">{{ r.category|cat }}</div></td>
+        <td>{{ r.expiry_text }}</td>
+        <td><b>{{ r.waste_qty|qty(r.unit) }}</b><div class="sub">{{ r.waste_value|sar }}</div></td>
+        <td><span class="chip {{ {'عالية': 'high', 'متوسطة': 'mid', 'منخفضة': 'low'}[r.priority] }}">{{ r.priority }}</span></td>
+        <td>{{ r.action_text }}</td>
+        <td class="actions">
+          {% if r.status == 'مقترح' %}
+          <form method="post" action="{{ url_for('decide', rec_id=r.rec_id) }}">
+            <button class="btn primary" name="decision" value="approve">اعتماد</button>
+            <button class="btn ghost" type="button" data-alt="alt-{{ loop.index }}">رفض</button>
+          </form>
+          {% elif r.status == 'معتمد' %}
+          <div class="decided">
+            <span class="chip done">معتمد{% if r.chosen_text == r.chosen_text and r.chosen_text %}: {{ r.chosen_text }}{% endif %}</span>
+            {% if r.editable %}
+            <form method="post" action="{{ url_for('edit', rec_id=r.rec_id) }}">
+              <button class="btn link">تعديل القرار</button>
+            </form>
+            {% else %}<span class="sub">لا يمكن التعديل بعد تأكيد الجمعية</span>{% endif %}
+          </div>
+          {% else %}<span class="chip muted">مرفوض</span>{% endif %}
+        </td>
+      </tr>
+      <tr class="why" id="why-{{ loop.index }}" hidden><td colspan="6">{{ r.reason }}</td></tr>
+      {% if r.status == 'مقترح' %}
+      <tr class="alt" id="alt-{{ loop.index }}" {{ '' if r.rec_id == editing else 'hidden' }}><td colspan="6">
+        <form method="post" action="{{ url_for('decide', rec_id=r.rec_id) }}" class="alt-form">
+          <span class="alt-title">اختر قرارًا آخر بدل «{{ r.action_text }}»:</span>
+          {% for k, t in r.alternatives.items() %}
+          <button class="btn alt-opt" name="alt" value="{{ k }}">{{ t }}</button>
+          {% endfor %}
+          <button class="btn ghost" name="decision" value="reject">رفض بدون بديل</button>
+        </form>
+      </td></tr>
+      {% endif %}
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% if rejected|length %}
+  <div class="rejected-line">
+    <span class="muted">مرفوضة اليوم:</span>
+    {% for r in rejected.itertuples() %}
+    <form method="post" action="{{ url_for('edit', rec_id=r.rec_id) }}" class="rejected-item">
+      <span>{{ r.product_name }}</span>
+      <button class="btn link">تعديل القرار</button>
+    </form>
+    {% endfor %}
+  </div>
+  {% endif %}
+  {% else %}
+  <p class="empty">لا توجد منتجات تحتاج قرارًا اليوم.</p>
+  {% endif %}
+</section>
+
+<section class="card" id="upcoming">
+  <div class="card-head">
+    <h2>التبرعات المتوقعة خلال {{ notice_days }} أيام</h2>
+    <span class="muted">أقصى كمية متوقع أن تتبقى دون بيع</span>
+  </div>
+  {% for d in upcoming %}
+  <div class="upcoming-day">
+    <div class="upcoming-when">
+      <b>{{ d.date|day }}</b>
+      <span class="sub">{{ 'غدًا' if d.days_ahead == 1 else ('بعد يومين' if d.days_ahead == 2 else 'بعد ' ~ d.days_ahead ~ ' أيام') }} · نحو {{ d.kg|num(1) }} كجم</span>
+    </div>
+    <div class="upcoming-items">
+      {% for i in d['items'] %}<span class="pill">{{ i.product_name }}: {{ i.qty|qty(i.unit) }}</span>{% endfor %}
+    </div>
+    <div class="upcoming-act">
+      {% if d.sent_at %}
+        {% if d.response == 'yes' %}<span class="chip done">الجمعية {{ response_ar['yes'] }}</span>
+        {% elif d.response == 'no' %}<span class="chip high">الجمعية {{ response_ar['no'] }}</span>
+        {% else %}<span class="chip muted">أُرسل الإشعار الساعة {{ d.sent_at }} · بانتظار رد الجمعية</span>{% endif %}
+      {% else %}
+      <form method="post" action="{{ url_for('notice', day_key=d.key) }}">
+        <button class="btn">إرسال إشعار مسبق للجمعية</button>
+      </form>
+      {% endif %}
+    </div>
+  </div>
+  {% else %}
+  <p class="empty">لا يُتوقع فائض للتبرع خلال {{ notice_days }} أيام القادمة.</p>
+  {% endfor %}
+</section>
+
+<section class="card" id="pickups">
+  <div class="card-head">
+    <h2>طلبات استلام التبرعات</h2>
+  </div>
+  {% if pickups|length %}
+  <div class="table-wrap"><table>
+    <thead><tr><th>المنتج</th><th>الكمية</th><th>الوزن</th><th>موعد الاستلام</th><th>الحالة</th></tr></thead>
+    <tbody>
+    {% for p in pickups.itertuples() %}
+      <tr>
+        <td><b>{{ p.product_name }}</b><div class="sub">أُرسل الساعة {{ p.sent_at }}</div></td>
+        <td>{{ p.qty|qty(p.unit) }}</td>
+        <td>{{ p.kg|num(1) }} كجم</td>
+        <td>اليوم {{ p.pickup_time }}</td>
+        <td><span class="chip {{ {'sent': 'mid', 'confirmed': 'low', 'delivered': 'done', 'cancelled': 'muted'}[p.status] }}">{{ pickup_status[p.status] }}</span>
+          {% if p.status != 'sent' %}<div class="sub">آخر تحديث {{ p.updated_at }}</div>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  {% else %}
+  <p class="empty">لا توجد طلبات استلام اليوم. عند اعتماد قرار تبرع يُرسل الطلب للجمعية تلقائيًا ويظهر هنا.</p>
+  {% endif %}
+</section>
+{% endblock %}
+{% block scripts %}
+<script>
+document.querySelectorAll('[data-alt]').forEach(function (b) {
+  b.addEventListener('click', function (e) {
+    e.stopPropagation();
+    var box = document.getElementById(b.dataset.alt);
+    box.hidden = !box.hidden;
+  });
+});
+document.querySelectorAll('tr.row').forEach(function (row) {
+  function toggle(e) {
+    if (e.target.closest('form')) return;
+    var why = document.getElementById(row.dataset.target);
+    why.hidden = !why.hidden;
+    row.setAttribute('aria-expanded', String(!why.hidden));
+  }
+  row.addEventListener('click', toggle);
+  row.addEventListener('keydown', function (e) { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(e); } });
+});
+</script>
+{% endblock %}

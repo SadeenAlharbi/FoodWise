@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% block title %}طلبية المخزون القادمة{% endblock %}
+{% block scripts %}
+<script>
+(function () {
+  var btn = document.getElementById('approve-btn');
+  if (!btn) return;
+  var boxes = document.querySelectorAll('input.pick');
+  function update() {
+    var n = 0; boxes.forEach(function (b) { if (b.checked) n++; });
+    btn.disabled = n === 0;
+    btn.textContent = n ? 'اعتماد ' + n + ' منتج' : 'اعتماد المنتجات المحددة';
+  }
+  boxes.forEach(function (b) { b.addEventListener('change', update); });
+})();
+</script>
+{% endblock %}
+{% block content %}
+<header class="page-head">
+  <div>
+    <div class="eyebrow">طلبية المخزون القادمة</div>
+    <h1>اطلب على قدر البيع المتوقع</h1>
+    <p>هذه الكميات المقترحة لأقرب توريد لكل منتج.</p>
+  </div>
+  <div class="order-actions">
+    <span class="muted">اعتُمد {{ approved|length }} من {{ rows|length }} منتج</span>
+    {% if approved|length < rows|length %}
+    <button class="btn primary big" type="submit" form="order-form" id="approve-btn" disabled>اعتماد المنتجات المحددة</button>
+    {% endif %}
+  </div>
+</header>
+
+
+<section class="card">
+  <form method="post" id="order-form">
+  <input type="hidden" name="product" value="{{ product }}">
+  <div class="table-wrap"><table>
+    <thead><tr><th>اختيار</th><th>المنتج</th><th>موعد التوريد</th><th>البيع المتوقع حتى التوريد التالي</th>
+      <th>المخزون المتوقع وقت الوصول</th><th>الطلبية المعتادة</th><th>الطلبية المقترحة</th><th>الفرق</th></tr></thead>
+    <tbody>
+    {% for r in rows.itertuples() %}
+      <tr class="{{ 'selected' if r.product_id == product }}">
+        <td>{% if r.product_id in approved %}<span class="chip done">معتمدة {{ approved[r.product_id] }}</span>
+            {% else %}<input type="checkbox" class="pick" name="pick" value="{{ r.product_id }}" aria-label="اختيار {{ r.product_name }}">{% endif %}</td>
+        <td><a href="{{ url_for('orders', product=r.product_id) }}"><b>{{ r.product_name }}</b></a><div class="sub">{{ r.category|cat }}</div></td>
+        <td>{{ r.delivery_date|day }}<div class="sub">{{ {1: 'يغطي يومًا واحدًا', 2: 'يغطي يومين'}.get(r.cover_days, 'يغطي ' ~ r.cover_days ~ ' أيام') }}</div></td>
+        <td>{{ r.cover_demand|qty(r.unit) }}</td>
+        <td>{{ r.usable_stock|qty(r.unit) }}</td>
+        <td>{{ r.usual_cases|num }} كرتون<div class="sub">{{ r.usual_qty|qty(r.unit) }}</div></td>
+        <td><b>{{ r.smart_cases|num }} كرتون</b><div class="sub">{{ r.smart_qty|qty(r.unit) }}</div></td>
+        <td>{% if r.diff_cases > 0 %}<span class="chip low">أقل بـ {{ r.diff_cases|num }} كرتون</span>
+            {% elif r.diff_cases < 0 %}<span class="chip mid">أكثر بـ {{ (-r.diff_cases)|num }} كرتون</span>
+            {% else %}<span class="chip muted">نفس الكمية</span>{% endif %}</td>
+      </tr>
+    {% endfor %}
+    </tbody>
+  </table></div>
+  </form>
+</section>
+
+<section class="card">
+  <div class="card-head">
+    <h2>{{ p.product_name }}: المبيعات وتوقع الأيام السبعة القادمة</h2>
+    <form method="get" class="inline">
+      <label for="product" class="muted">المنتج</label>
+      <select id="product" name="product" onchange="this.form.submit()">
+        {% for x in products.itertuples() %}<option value="{{ x.product_id }}" {{ 'selected' if x.product_id == product }}>{{ x.product_name }}</option>{% endfor %}
+      </select>
+    </form>
+  </div>
+  <p class="muted">الطلب المتوقع خلال 7 أيام: <b>{{ fc_total|qty(p.unit) }}</b></p>
+  <div class="legend"><span class="key solid"></span>المبيعات الفعلية <span class="key dashed"></span>الطلب المتوقع</div>
+  {{ chart|safe }}
+</section>
+{% endblock %}

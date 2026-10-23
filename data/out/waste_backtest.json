@@ -1,0 +1,26 @@
+{
+  "origins": 18,
+  "batches_checked": 310,
+  "predicted_value": 5733.0,
+  "actual_value": 6619.0,
+  "bias_pct": -13.4,
+  "error_pct": 48.3,
+  "caught_pct": 100.0,
+  "correct_alerts_pct": 59.0,
+  "batches_with_waste": 36,
+  "batches_flagged": 61,
+  "by_category": {
+    "مخبوزات": {
+      "predicted": 4.0,
+      "actual": 6.0
+    },
+    "ألبان": {
+      "predicted": 3330.0,
+      "actual": 4084.0
+    },
+    "خضار وفواكه": {
+      "predicted": 2400.0,
+      "actual": 2530.0
+    }
+  }
+}

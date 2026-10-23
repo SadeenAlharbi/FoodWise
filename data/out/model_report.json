@@ -1,0 +1,90 @@
+{
+  "season_check": {
+    "period": [
+      "2026-02-18",
+      "2026-03-23"
+    ],
+    "accuracy_with_season_pct": 84.9,
+    "accuracy_without_season_pct": 81.7
+  },
+  "chosen": "gb",
+  "chosen_name": "Gradient Boosting",
+  "accuracy_pct": 85.3,
+  "ranges": {
+    "1-7": {
+      "chosen": "gb",
+      "chosen_name": "Gradient Boosting",
+      "accuracy_pct": {
+        "Gradient Boosting": 85.3,
+        "Random Forest": 85.0,
+        "متوسط نفس اليوم في آخر 4 أسابيع": 83.7,
+        "نفس اليوم الأسبوع الماضي": 79.6
+      },
+      "improvement_vs_simple_pct": 9.8
+    },
+    "8-30": {
+      "chosen": "gb",
+      "chosen_name": "Gradient Boosting",
+      "accuracy_pct": {
+        "Gradient Boosting": 85.8,
+        "Random Forest": 85.1,
+        "متوسط نفس اليوم في آخر 4 أسابيع": 83.6,
+        "نفس اليوم الأسبوع الماضي": 79.5
+      },
+      "improvement_vs_simple_pct": 12.9
+    }
+  },
+  "accuracy_by_days_ahead_pct": {
+    "1-7": 85.3,
+    "8-14": 85.9,
+    "15-30": 85.7
+  },
+  "test_period": [
+    "2026-09-11",
+    "2026-10-22"
+  ],
+  "per_product_accuracy_pct": {
+    "P01": 87.2,
+    "P02": 86.1,
+    "P03": 84.6,
+    "P04": 87.3,
+    "P05": 83.8,
+    "P06": 84.9,
+    "P07": 81.5,
+    "P08": 83.6,
+    "P09": 78.8,
+    "P10": 86.0,
+    "P11": 87.8,
+    "P12": 87.1,
+    "P13": 80.5,
+    "P14": 79.5
+  },
+  "waste_check": {
+    "origins": 18,
+    "batches_checked": 310,
+    "predicted_value": 5733.0,
+    "actual_value": 6619.0,
+    "bias_pct": -13.4,
+    "error_pct": 48.3,
+    "caught_pct": 100.0,
+    "correct_alerts_pct": 59.0,
+    "batches_with_waste": 36,
+    "batches_flagged": 61,
+    "by_category": {
+      "مخبوزات": {
+        "predicted": 4.0,
+        "actual": 6.0
+      },
+      "ألبان": {
+        "predicted": 3330.0,
+        "actual": 4084.0
+      },
+      "خضار وفواكه": {
+        "predicted": 2400.0,
+        "actual": 2530.0
+      }
+    }
+  },
+  "today": "2026-10-23",
+  "runtime_sec": 138.6
+}
