@@ -150,3 +150,6 @@ input.pick { width: 22px; height: 22px; accent-color: var(--green); cursor: poin
 .btn.alt-opt:hover { background: var(--green); color: #fff; }
 .respond { display: flex; gap: 8px; }
 .btn.chosen-no { background: var(--high-bg); border-color: var(--high-ink); color: var(--high-ink); }
+.switch { margin-top: auto; display: flex; align-items: center; justify-content: center; gap: 8px; color: var(--sidebar-text); text-decoration: none; font-size: 14px; padding: 12px; border: 1px solid rgba(255,255,255,.18); border-radius: 12px; }
+.switch:hover { color: #fff; border-color: rgba(255,255,255,.4); }
+.switch svg { width: 16px; height: 16px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
